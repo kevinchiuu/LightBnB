@@ -1,16 +1,9 @@
 /* eslint-disable camelcase */
 const properties = require('./json/properties.json');
 const users = require('./json/users.json');
-const { Pool } = require('pg');
+const pool = require('./index');
 
 /// Users
-
-const pool = new Pool({
-  user: 'vagrant',
-  password: '123',
-  host: 'localhost',
-  database: 'lightbnb'
-});
 
 /**
  * Get a single user from the database given their email.
@@ -18,8 +11,7 @@ const pool = new Pool({
  * @return {Promise<{}>} A promise to the user.
  */
 const getUserWithEmail = function(email) {
-  return pool
-    .query(`SELECT *
+  return db.query(`SELECT *
             FROM users
             WHERE email = $1
     `, [email])
@@ -37,8 +29,7 @@ exports.getUserWithEmail = getUserWithEmail;
  * @return {Promise<{}>} A promise to the user.
  */
 const getUserWithId = function(id) {
-  return pool
-    .query(`SELECT * 
+  return db.query(`SELECT * 
             FROM users
             WHERE users.id = $1
     `,[id])
@@ -55,8 +46,7 @@ exports.getUserWithId = getUserWithId;
  * @return {Promise<{}>} A promise to the user.
  */
 const addUser = function(user) {
-  return pool
-    .query(`
+  return db.query(`
       INSERT INTO users (name, email, password)
       VALUES ($1, $2, $3)
       RETURNING *;
@@ -75,7 +65,7 @@ exports.addUser = addUser;
  * @return {Promise<[{}]>} A promise to the reservations.
  */
 const getAllReservations = function(guest_id, limit = 10) {
-  return pool.query(`
+  return db.query(`
     SELECT properties.*, reservations.*, avg(rating) as average_rating
     FROM reservations
     JOIN properties ON reservations.property_id = properties.id
@@ -156,7 +146,7 @@ exports.getAllProperties = getAllProperties;
  * @return {Promise<{}>} A promise to the property.
  */
 const addProperty = function(property) {
-  return pool.query(`
+  return db.query(`
     INSERT INTO properties (
       owner_id,
       title,
@@ -175,6 +165,7 @@ const addProperty = function(property) {
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
       RETURNING *;`, [property.owner_id, property.title, property.description, property.thumbnail_photo_url, property.cover_photo_url, property.cost_per_night, property.street, property.city, property.province, property.post_code, property.country, property.parking_spaces, property.number_of_bathrooms, property.number_of_bedrooms]);
       .then(res => res.rows[0])
-      .catch(err => console.err('error', err.stack))
+      .catch(err => console.err('error', err.stack));
 };
+
 exports.addProperty = addProperty;
